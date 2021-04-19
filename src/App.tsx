@@ -1,5 +1,3 @@
-import "./App.css";
-
 import * as React from "react";
 import Container from "react-bootstrap/Container";
 import { IntlProvider } from "react-intl";
@@ -14,10 +12,7 @@ import UserClient from "./ApiClient/UserClient";
 import CredentialsProvider from "./ApiClient/util/CredentialsProvider";
 import LoginHooks from "./ApiClient/util/LoginHooks";
 import AppNavbar from "./components/AppNavbar";
-import ErrorAlert from "./components/utils/ErrorAlert";
-import ErrorBoundary from "./components/utils/ErrorBoundary";
-import JobsList from "./components/utils/JobsList";
-import Loading from "./components/utils/Loading";
+import { ErrorAlert, ErrorBoundary, JobsList, Loading } from "./components/utils";
 import { GeneralContext, UnsafeGeneralContext } from "./contexts/GeneralContext";
 import { DEFAULT_BASEPATH } from "./definitions/constants";
 import Router from "./Router";
@@ -287,10 +282,10 @@ class App extends React.Component<IProps, IState> {
         );
     }
 
-    private async loadTranslation(): Promise<void> {
+    private async loadTranslation(locale: string = this.props.locale): Promise<void> {
         console.time("LoadTranslations");
         try {
-            const translation = await this.translationFactory.loadTranslation(this.props.locale);
+            const translation = await this.translationFactory.loadTranslation(locale);
             this.setState({
                 translation
             });

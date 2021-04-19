@@ -6,7 +6,7 @@ import { FormattedMessage } from "react-intl";
 
 import { GeneralContext, UnsafeGeneralContext } from "../../contexts/GeneralContext";
 import { MODE, VERSION } from "../../definitions/constants";
-import Loading from "../utils/Loading";
+import { Loading } from "../utils";
 
 interface IProps {}
 interface IState {}

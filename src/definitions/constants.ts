@@ -10,6 +10,16 @@ const _MODE = MODE;
 const _DEFAULT_BASEPATH = DEFAULT_BASEPATH;
 const _DEFAULT_APIPATH = DEFAULT_APIPATH;
 
+export enum HostingTabLocation {
+    INFO = "",
+    CHATBOT = "chatbots",
+    CODE = "code",
+    DEPLOYMENT = "deployment",
+    CONFIG = "configuration",
+    FILES = "files",
+    USER = "users"
+}
+
 export { _API_VERSION as API_VERSION };
 export { _VERSION as VERSION };
 export { _MODE as MODE };

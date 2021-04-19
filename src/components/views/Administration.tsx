@@ -16,8 +16,7 @@ import { StatusCode } from "../../ApiClient/models/InternalComms/InternalStatus"
 import { GeneralContext } from "../../contexts/GeneralContext";
 import { resolvePermissionSet } from "../../utils/misc";
 import { AppRoutes } from "../../utils/routes";
-import ErrorAlert from "../utils/ErrorAlert";
-import Loading from "../utils/Loading";
+import { ErrorAlert, Loading } from "../utils";
 
 interface IProps extends RouteComponentProps {}
 interface IState {

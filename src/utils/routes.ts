@@ -6,47 +6,80 @@ import { StatusCode } from "../ApiClient/models/InternalComms/InternalStatus";
 import UserClient from "../ApiClient/UserClient";
 import CredentialsProvider from "../ApiClient/util/CredentialsProvider";
 import JobsController from "../ApiClient/util/JobsController";
+import { HostingTabLocation } from "../definitions/constants";
 import { resolvePermissionSet } from "./misc";
 
 export interface AppRoute {
     ///Base parameters
-    //must be unique, also is the id of the route name message
+    /**
+     * Must be unique, also is the id of the route name message
+     */
     name: string;
-    //must be unique, url to access
+    /**
+     * Must be unique, url to access
+     */
     route: string;
-    //link to link to when linking to the route, defaults to the "route"
+    /**
+     * Fink to link to when linking to the route, defaults to the "route"
+     */
     link?: string;
-    //filename in components/view that the route should display
+    /**
+     * Filename in components/view that the route should display
+     */
     file: string;
 
     ///Path parameters
-    //If subpaths should route here
+    /**
+     * If subpaths should route here
+     */
     loose: boolean;
-    //If subpaths should light up the navbar button
+    /**
+     * If subpaths should light up the navbar button
+     */
     navbarLoose: boolean;
 
     ///Authentication
-    //if we can route to it even on the login page
+    /**
+     * If we can route to it even on the login page
+     */
     loginless?: boolean;
-    //function to tell if we are authorized
+    /**
+     * Function to tell if we are authorized
+     */
     isAuthorized: () => Promise<boolean>;
-    //result of isAuthorized() after RouteController runs it, can be used by components but only set by RouteController
+    /**
+     * Result of isAuthorized() after RouteController runs it, can be used by components but only set by RouteController
+     */
     cachedAuth?: boolean;
 
     ///Visibility
-    //if this shows up on the navbar
+    /**
+     * If this shows up on the navbar
+     */
     visibleNavbar: boolean;
-    //serves two purposes, first one is to give it an icon, the second one is to not display it if the icon is undefined
+    /**
+     * Displays the icon.
+     */
     homeIcon?: IconProp;
+    /**
+     * Is this specific thing hidden? Stops it from being shown in Home.tsx
+     */
+    hidden?: boolean;
 
     ///Categories
-    //name of the category it belongs to
+    /**
+     * Name of the category it belongs to
+     */
     category?: string;
-    //if this is the main button in the category
+    /**
+     * If this is the main button in the category
+     */
     catleader?: boolean;
 
     ///Misc
-    //Should we not wrap this component in a <Container>?
+    /**
+     * Should we not wrap this component in a <Container>?
+     */
     noContainer?: boolean;
 }
 
@@ -89,8 +122,8 @@ const AppRoutes = asElementTypesAppRoute({
         isAuthorized: (): Promise<boolean> => Promise.resolve(true),
         cachedAuth: true,
 
-        visibleNavbar: true,
-        homeIcon: undefined,
+        visibleNavbar: false, // eeh, kinda useless
+        homeIcon: "home",
 
         category: "home",
         catleader: true
@@ -106,13 +139,14 @@ const AppRoutes = asElementTypesAppRoute({
         isAuthorized: instanceManagerRight(InstanceManagerRights.Create),
 
         visibleNavbar: false,
+        homeIcon: "plus-square",
 
         category: "instance",
         catleader: false
     },
     instancelist: {
         name: "routes.instancelist",
-        route: "/instances/",
+        route: "/instances",
         file: "Instance/List",
 
         loose: false,
@@ -126,14 +160,17 @@ const AppRoutes = asElementTypesAppRoute({
         category: "instance",
         catleader: true
     },
+    /**
+     * @deprecated
+     */
     instancecode: {
         name: "routes.instancecode",
-        route: "/instances/code/:id(\\d+)/",
+        route: "/instances/code/:id(\\d+)",
         file: "Instance/CodeDeployment",
 
         get link(): string {
             return RouteData.instanceid !== undefined
-                ? `/instances/code/${RouteData.instanceid}/`
+                ? `/instances/code/${RouteData.instanceid}`
                 : AppRoutes.instancelist.link || AppRoutes.instancelist.route;
         },
 
@@ -143,21 +180,21 @@ const AppRoutes = asElementTypesAppRoute({
         isAuthorized: (): Promise<boolean> => Promise.resolve(true),
         cachedAuth: true,
 
-        visibleNavbar: true,
-        homeIcon: undefined,
+        visibleNavbar: false,
+        homeIcon: "code-branch",
 
         category: "instance"
     },
     instancehosting: {
         name: "routes.instancehosting",
-        route: "/instances/hosting/:id(\\d+)/:tab?/",
+        route: "/instances/hosting/:id(\\d+)/:tab?",
         file: "Instance/Hosting",
 
         get link(): string {
             return RouteData.instanceid !== undefined
-                ? `/instances/hosting/${RouteData.instanceid}/${
-                      RouteData.selectedinstancehostingtab !== undefined
-                          ? `${RouteData.selectedinstancehostingtab}/`
+                ? `/instances/hosting/${RouteData.instanceid}${
+                      RouteData.selectedinstancehostingtab
+                          ? `/${RouteData.selectedinstancehostingtab}`
                           : ""
                   }`
                 : AppRoutes.instancelist.link || AppRoutes.instancelist.route;
@@ -169,11 +206,14 @@ const AppRoutes = asElementTypesAppRoute({
         isAuthorized: (): Promise<boolean> => Promise.resolve(true),
         cachedAuth: true,
 
-        visibleNavbar: true,
-        homeIcon: undefined,
+        visibleNavbar: false,
+        homeIcon: "server",
 
         category: "instance"
     },
+    /**
+     * @deprecated
+     */
     instanceconfig: {
         name: "routes.instanceconfig",
         route: "/instances/config/:id(\\d+)/:tab?/",
@@ -181,9 +221,9 @@ const AppRoutes = asElementTypesAppRoute({
 
         get link(): string {
             return RouteData.instanceid !== undefined
-                ? `/instances/config/${RouteData.instanceid}/${
+                ? `/instances/config/${RouteData.instanceid}${
                       RouteData.selectedinstanceconfigtab !== undefined
-                          ? `${RouteData.selectedinstanceconfigtab}/`
+                          ? `/${RouteData.selectedinstanceconfigtab}`
                           : ""
                   }`
                 : AppRoutes.instancelist.link || AppRoutes.instancelist.route;
@@ -195,8 +235,8 @@ const AppRoutes = asElementTypesAppRoute({
         isAuthorized: () => Promise.resolve(true),
         cachedAuth: true,
 
-        visibleNavbar: true,
-        homeIcon: undefined,
+        visibleNavbar: false, // bye bye!
+        homeIcon: "cog",
 
         category: "instance"
     },
@@ -207,7 +247,7 @@ const AppRoutes = asElementTypesAppRoute({
 
         get link(): string {
             return RouteData.instanceid !== undefined
-                ? `/instances/jobs/${RouteData.instanceid}/`
+                ? `/instances/jobs/${RouteData.instanceid}`
                 : AppRoutes.instancelist.link || AppRoutes.instancelist.route;
         },
 
@@ -218,13 +258,13 @@ const AppRoutes = asElementTypesAppRoute({
         cachedAuth: true,
 
         visibleNavbar: true,
-        homeIcon: undefined,
+        homeIcon: "briefcase",
 
         category: "instance"
     },
     userlist: {
         name: "routes.usermanager",
-        route: "/users/",
+        route: "/users",
         file: "User/List",
 
         loose: false,
@@ -242,13 +282,13 @@ const AppRoutes = asElementTypesAppRoute({
     },
     useredit: {
         name: "routes.useredit",
-        route: "/users/edit/user/:id(\\d+)/:tab?/",
+        route: "/users/edit/user/:id(\\d+)/:tab?",
 
         //whole lot of bullshit just to make it that if you have an id, link to the edit page, otherwise link to the list page, and if you link to the user page, put the tab in
         get link(): string {
             return RouteData.selecteduserid !== undefined
-                ? `/users/edit/user/${RouteData.selecteduserid}/${
-                      RouteData.selectedusertab !== undefined ? `${RouteData.selectedusertab}/` : ""
+                ? `/users/edit/user/${RouteData.selecteduserid}${
+                      RouteData.selectedusertab !== undefined ? `/${RouteData.selectedusertab}` : ""
                   }`
                 : AppRoutes.userlist.link || AppRoutes.userlist.route;
         },
@@ -262,15 +302,39 @@ const AppRoutes = asElementTypesAppRoute({
         cachedAuth: true,
 
         visibleNavbar: true,
-        homeIcon: undefined,
+        homeIcon: "edit",
+
+        category: "user"
+    },
+    useredit_info: {
+        name: "routes.useredit_info",
+        route: "/users/edit/user/:id(\\d+)/:tab?/",
+
+        //whole lot of bullshit just to make it that if you have an id, link to the edit page, otherwise link to the list page, and if you link to the user page, put the tab in
+        get link(): string {
+            return RouteData.currentuserid
+                ? `/users/edit/user/${RouteData.currentuserid}/info`
+                : "/users";
+        },
+        file: "User/Edit",
+
+        loose: true,
+        navbarLoose: true,
+
+        //you can always read your own user
+        isAuthorized: (): Promise<boolean> => Promise.resolve(true),
+        cachedAuth: true,
+
+        visibleNavbar: false,
+        homeIcon: "edit",
 
         category: "user"
     },
     usercreate: {
         name: "routes.usercreate",
-        route: "/users/create/",
+        route: "/users/create",
 
-        link: "/users/create/",
+        link: "/users/create",
         file: "User/Create",
 
         loose: true,
@@ -279,13 +343,13 @@ const AppRoutes = asElementTypesAppRoute({
         isAuthorized: adminRight(AdministrationRights.WriteUsers),
 
         visibleNavbar: true,
-        homeIcon: undefined,
+        homeIcon: "user-plus",
 
         category: "user"
     },
     admin: {
         name: "routes.admin",
-        route: "/admin/",
+        route: "/admin",
         file: "Administration",
 
         loose: false,
@@ -302,24 +366,24 @@ const AppRoutes = asElementTypesAppRoute({
     },
     admin_update: {
         name: "routes.admin.update",
-        route: "/admin/update/:all?/",
+        route: "/admin/update/:all?",
         file: "Admin/Update",
 
-        link: "/admin/update/",
+        link: "/admin/update",
 
         loose: true,
         navbarLoose: true,
 
         isAuthorized: adminRight(AdministrationRights.ChangeVersion),
         visibleNavbar: true,
-        homeIcon: undefined,
+        homeIcon: "toolbox",
 
         category: "admin"
     },
     admin_logs: {
         name: "routes.admin.logs",
-        route: "/admin/logs/:name?/",
-        link: "/admin/logs/",
+        route: "/admin/logs/:name?",
+        link: "/admin/logs",
         file: "Admin/Logs",
 
         loose: false,
@@ -327,7 +391,7 @@ const AppRoutes = asElementTypesAppRoute({
 
         isAuthorized: adminRight(AdministrationRights.DownloadLogs),
         visibleNavbar: true,
-        homeIcon: undefined,
+        homeIcon: "bars",
 
         category: "admin",
 
@@ -335,7 +399,7 @@ const AppRoutes = asElementTypesAppRoute({
     },
     passwd: {
         name: "routes.passwd",
-        route: "/users/passwd/:id(\\d+)?/",
+        route: "/users/passwd/:id(\\d+)?",
         link: "/users/passwd/",
         file: "ChangePassword",
 
@@ -349,7 +413,7 @@ const AppRoutes = asElementTypesAppRoute({
     },
     config: {
         name: "routes.config",
-        route: "/config/",
+        route: "/config",
         file: "Configuration",
 
         loose: true,
@@ -359,12 +423,12 @@ const AppRoutes = asElementTypesAppRoute({
         isAuthorized: (): Promise<boolean> => Promise.resolve(true),
         cachedAuth: true,
 
-        visibleNavbar: false,
-        homeIcon: "cogs"
+        visibleNavbar: true,
+        homeIcon: "cog"
     },
     setup: {
         name: "routes.setup",
-        route: "/setup/",
+        route: "/setup",
         file: "Setup",
 
         loose: true,
@@ -374,11 +438,12 @@ const AppRoutes = asElementTypesAppRoute({
         isAuthorized: (): Promise<boolean> => Promise.resolve(true),
         cachedAuth: true,
 
-        visibleNavbar: false
+        visibleNavbar: false,
+        homeIcon: "wrench"
     },
     oAuth: {
         name: "routes.oauth",
-        route: "/oauth/:provider?/",
+        route: "/oauth/:provider?",
         file: "Login",
 
         loose: true,
@@ -388,7 +453,8 @@ const AppRoutes = asElementTypesAppRoute({
         isAuthorized: (): Promise<boolean> => Promise.resolve(true),
         cachedAuth: true,
 
-        visibleNavbar: false
+        visibleNavbar: false,
+        homeIcon: "key"
     },
     info: {
         name: "routes.info",
@@ -405,7 +471,7 @@ const AppRoutes = asElementTypesAppRoute({
         visibleNavbar: true,
         homeIcon: "info-circle",
 
-        category: undefined,
+        category: "admin",
         catleader: false
     }
 });
@@ -447,9 +513,10 @@ export const AppCategories: { [K in keyof typeof UnpopulatedAppCategories]: AppC
 export const RouteData = {
     selecteduserid: undefined as undefined | number,
     selectedusertab: undefined as undefined | string,
+    currentuserid: undefined as undefined | number,
 
     selectedinstanceconfigtab: undefined as undefined | string,
-    selectedinstancehostingtab: undefined as undefined | string,
+    selectedinstancehostingtab: undefined as undefined | HostingTabLocation,
     _instanceid: undefined as undefined | number,
 
     set instanceid(newval: string | undefined) {

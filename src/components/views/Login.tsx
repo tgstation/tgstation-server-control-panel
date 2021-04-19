@@ -4,7 +4,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { ChangeEvent, FormEvent, ReactNode } from "react";
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
+import OverlayTrigger from "react-bootstrap/esm/OverlayTrigger";
+import Tooltip from "react-bootstrap/esm/Tooltip";
 import Form from "react-bootstrap/Form";
+import Jumbotron from "react-bootstrap/Jumbotron";
 import { FormattedMessage } from "react-intl";
 import { RouteComponentProps } from "react-router";
 import { withRouter } from "react-router-dom";
@@ -20,8 +23,7 @@ import { MODE } from "../../definitions/constants";
 import KeycloakLogo from "../../images/keycloak_icon_64px.png";
 import TGLogo from "../../images/tglogo-white.svg";
 import { RouteData } from "../../utils/routes";
-import ErrorAlert from "../utils/ErrorAlert";
-import Loading from "../utils/Loading";
+import { ErrorAlert, Loading } from "../utils";
 
 interface IProps extends RouteComponentProps {
     prefillLogin?: string;
@@ -55,10 +57,10 @@ class Login extends React.Component<IProps, IState> {
         console.log(RouteData.oautherrors);
 
         this.state = {
-            busy: false,
+            busy: true,
             validated: false,
             username: "",
-            password: "",
+            password: "", // todo: DO NOT STORE PASSWORDS IN STATE, YOU CAN STILL RECOVER IT
             errors: Array.from(RouteData.oautherrors)
         };
     }
@@ -124,74 +126,126 @@ class Login extends React.Component<IProps, IState> {
         };
 
         return (
-            <Form validated={this.state.validated} onSubmit={this.submit}>
-                <Col className="mx-auto" lg={5} md={8}>
-                    {this.state.errors.map((err, index) => {
-                        if (!err) return;
-                        return (
-                            <ErrorAlert
-                                key={index}
-                                error={err}
-                                onClose={() =>
-                                    this.setState(prev => {
-                                        const newarr = Array.from(prev.errors);
-                                        newarr[index] = undefined;
-                                        return {
-                                            errors: newarr
-                                        };
-                                    })
-                                }
-                            />
-                        );
-                    })}
-                    <Form.Group controlId="username">
-                        <Form.Label>
-                            <FormattedMessage id="login.username" />
-                        </Form.Label>
-                        <Form.Control
-                            type="text"
-                            onChange={handleUsrInput}
-                            value={this.state.username}
-                            required
-                        />
-                    </Form.Group>
-                    <Form.Group controlId="password">
-                        <Form.Label>
-                            <FormattedMessage id="login.password" />
-                        </Form.Label>
-                        <Form.Control
-                            type="password"
-                            onChange={handlePwdInput}
-                            value={this.state.password}
-                            required
-                        />
-                    </Form.Group>
-                    <Button type="submit">
-                        <FormattedMessage id="login.submit" />
-                    </Button>
-                    <hr />
-                    <div className="d-flex justify-content-center">
-                        <div className="d-flex flex-column align-items-stretch">
-                            {Object.keys(this.context.serverInfo.oAuthProviderInfos || {}).map(
-                                provider => (
+            <div className={"login"}>
+                <h1>
+                    <FormattedMessage id="login.tocontinue" />
+                </h1>
+                <Form validated={this.state.validated} onSubmit={this.submit}>
+                    <Jumbotron className={"dark"}>
+                        <Col className="mx-auto">
+                            {this.state.errors.map((err, index) => {
+                                if (!err) return;
+                                return (
+                                    <ErrorAlert
+                                        key={index}
+                                        error={err}
+                                        onClose={() =>
+                                            this.setState(prev => {
+                                                const newarr = Array.from(prev.errors);
+                                                newarr[index] = undefined;
+                                                return {
+                                                    errors: newarr
+                                                };
+                                            })
+                                        }
+                                    />
+                                );
+                            })}
+                            <Form.Group controlId="username">
+                                <Form.Label>
+                                    <FormattedMessage id="login.username" />
+                                </Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Enter username"
+                                    autoComplete={"username"}
+                                    onChange={handleUsrInput}
+                                    value={this.state.username}
+                                    required
+                                    isInvalid={!this.state.username}
+                                />
+                            </Form.Group>
+                            <Form.Group controlId="password">
+                                <Form.Label>
+                                    <FormattedMessage id="login.password" />
+                                </Form.Label>
+                                <Form.Control
+                                    type="password"
+                                    placeholder="Password"
+                                    onChange={handlePwdInput}
+                                    value={this.state.password}
+                                    required
+                                    isInvalid={!this.state.password}
+                                />
+                            </Form.Group>
+                            <Button type="submit" variant="primary" block>
+                                <FormattedMessage id="login.submit" />
+                            </Button>
+                            {MODE === "DEV" && (
+                                <OverlayTrigger
+                                    placement={"top"}
+                                    overlay={
+                                        <Tooltip id={"tooltip-defaultacc"}>
+                                            Or you could use <code>ctrl+shift+l</code>
+                                        </Tooltip>
+                                    }>
                                     <Button
-                                        className="text-left my-1"
-                                        key={provider}
-                                        onClick={() => this.startOAuth(provider as OAuthProvider)}>
-                                        {providers[provider as OAuthProvider]}
-                                        <span className="ml-2">
-                                            <FormattedMessage
-                                                id="login.oauth"
-                                                values={{ provider }}
-                                            />
-                                        </span>
+                                        onClick={async () => {
+                                            await this.tryLoginDefault();
+                                        }}
+                                        variant="outline-primary"
+                                        block>
+                                        <FormattedMessage id="login.defaultacc" />
                                     </Button>
-                                )
+                                </OverlayTrigger>
                             )}
-                        </div>
-                    </div>
-                </Col>
-            </Form>
+                            {/* <Button
+                                    onClick={() => {
+                                        alert(
+                                            "Not yet implimented!\nPlease ask your webmaster about resetting it."
+                                        );
+                                    }}
+                                    variant="outline-primary"
+                                    block>
+                                    <FormattedMessage id="login.forgotpass" />
+                                </Button> */}
+
+                            {/* you see that, yes? I can't use normal json functions to find if there is any auth providers. Too bad! */}
+                            {(this.context.serverInfo?.oAuthProviderInfos?.Discord ||
+                                this.context.serverInfo?.oAuthProviderInfos?.GitHub ||
+                                this.context.serverInfo?.oAuthProviderInfos?.Keycloak ||
+                                this.context.serverInfo?.oAuthProviderInfos?.TGForums) && (
+                                <>
+                                    <hr />
+                                    <Jumbotron>
+                                        <div className="d-flex flex-column align-items-stretch">
+                                            {Object.keys(
+                                                this.context.serverInfo?.oAuthProviderInfos || {}
+                                            ).map(provider => (
+                                                <Button
+                                                    className="text-left my-1"
+                                                    key={provider}
+                                                    onClick={() =>
+                                                        this.startOAuth(provider as OAuthProvider)
+                                                    }
+                                                    block>
+                                                    {providers[provider as OAuthProvider]}
+                                                    <span className="ml-2">
+                                                        <FormattedMessage
+                                                            id="login.oauth"
+                                                            values={{ provider }}
+                                                        />
+                                                    </span>
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </Jumbotron>
+                                </>
+                            )}
+                        </Col>
+                    </Jumbotron>
+                </Form>
+            </div>
         );
     }
 

@@ -1,4 +1,3 @@
-import loadable from "@loadable/component";
 import React from "react";
 import Button from "react-bootstrap/Button";
 import Tab from "react-bootstrap/Tab";
@@ -13,11 +12,8 @@ import InternalError, { ErrorCode } from "../../../ApiClient/models/InternalComm
 import { StatusCode } from "../../../ApiClient/models/InternalComms/InternalStatus";
 import { GeneralContext } from "../../../contexts/GeneralContext";
 import { GlobalObjects } from "../../../utils/globalObjects";
-import { resolvePermissionSet } from "../../../utils/misc";
 import { AppRoutes, RouteData } from "../../../utils/routes";
-import ErrorAlert from "../../utils/ErrorAlert";
-import Loading from "../../utils/Loading";
-import WIPNotice from "../../utils/WIPNotice";
+import { ErrorAlert, Loading, WIPNotice } from "../../utils";
 
 interface IProps extends RouteComponentProps<{ id: string; tab?: string }> {}
 
@@ -111,16 +107,9 @@ class InstanceConfig extends React.Component<IProps, IState> {
                 tab: newkey
             });
         };
-        const LoadSpin = <Loading text={"loading.page"} />;
-
-        //should always be a react component
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        const InstanceSettings = loadable(() => import(`./Config/InstanceSettings`), {
-            fallback: LoadSpin
-        });
 
         return (
-            <div className="text-center">
+            <>
                 {this.state.errors.map((err, index) => {
                     if (!err) return;
                     return (
@@ -139,13 +128,6 @@ class InstanceConfig extends React.Component<IProps, IState> {
                         />
                     );
                 })}
-                {this.state.instance ? (
-                    <h3>{`${this.state.instance.name} (${this.state.instance.id})`}</h3>
-                ) : (
-                    <h3>
-                        <FormattedMessage id="generic.assert.noinstance" />
-                    </h3>
-                )}
                 <Button as={Link} to={AppRoutes.instancelist.link || AppRoutes.instancelist.route}>
                     <FormattedMessage id="generic.goback" />
                 </Button>
@@ -153,19 +135,6 @@ class InstanceConfig extends React.Component<IProps, IState> {
                     className="justify-content-center mb-3 mt-4 flex-column flex-md-row"
                     activeKey={this.state.tab}
                     onSelect={changetabs}>
-                    <Tab
-                        eventKey="settings"
-                        title={<FormattedMessage id="view.instance.config.instancesettings" />}>
-                        {this.state.instance ? (
-                            <InstanceSettings
-                                instance={this.state.instance}
-                                loadInstance={this.loadInstance}
-                                selfPermissionSet={resolvePermissionSet(this.context.user)}
-                            />
-                        ) : (
-                            <FormattedMessage id="generic.assert.noinstance" />
-                        )}
-                    </Tab>
                     <Tab
                         eventKey="users"
                         title={<FormattedMessage id="view.instance.config.instanceusers" />}>
@@ -177,7 +146,7 @@ class InstanceConfig extends React.Component<IProps, IState> {
                         <WIPNotice />
                     </Tab>
                 </Tabs>
-            </div>
+            </>
         );
     }
 }
